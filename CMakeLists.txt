@@ -12,6 +12,7 @@ endif()
 
 option(LOB_BUILD_TESTS "Build unit tests (fetches GoogleTest)" ON)
 option(LOB_BUILD_BENCH "Build benchmarks (fetches Google Benchmark)" OFF)
+option(LOB_BUILD_WASM "Build the WebAssembly demo module (needs emcmake)" OFF)
 option(LOB_BUILD_TOOLS "Build the feed generator and replay tools" ON)
 # e.g. -DLOB_SANITIZE=address,undefined  or  -DLOB_SANITIZE=thread
 set(LOB_SANITIZE "" CACHE STRING "Comma separated list passed to -fsanitize=")
@@ -31,7 +32,9 @@ endif()
 add_library(lob_options INTERFACE)
 target_compile_options(lob_options INTERFACE -Wall -Wextra -Wpedantic)
 
-find_package(Threads REQUIRED)
+if(NOT EMSCRIPTEN)
+  find_package(Threads REQUIRED)
+endif()
 
 add_library(lob
   src/order_book.cpp
@@ -39,7 +42,10 @@ add_library(lob
   src/generator.cpp
   src/replay.cpp)
 target_include_directories(lob PUBLIC include)
-target_link_libraries(lob PUBLIC lob_options Threads::Threads)
+target_link_libraries(lob PUBLIC lob_options)
+if(NOT EMSCRIPTEN)
+  target_link_libraries(lob PUBLIC Threads::Threads)
+endif()
 
 if(LOB_BUILD_TOOLS)
   add_executable(lob_gen tools/lob_gen.cpp)
@@ -67,4 +73,8 @@ if(LOB_BUILD_BENCH)
   set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(benchmark)
   add_subdirectory(bench)
+endif()
+
+if(LOB_BUILD_WASM)
+  add_subdirectory(wasm)
 endif()

@@ -51,9 +51,11 @@ struct ReplayResult {
 // Decode a feed file image and run it through a fresh book on this thread.
 ReplayResult replay_bytes(std::span<const std::uint8_t> file);
 
+#ifndef __EMSCRIPTEN__  // not available in the single-threaded WebAssembly build
 // Same result, but decoding runs on its own thread and hands messages to the
 // book thread (this one) through an SpscQueue of the given capacity.
 ReplayResult replay_bytes_threaded(std::span<const std::uint8_t> file,
                                    std::size_t queue_capacity = 1 << 14);
+#endif
 
 }  // namespace lob

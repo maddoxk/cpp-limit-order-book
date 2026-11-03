@@ -8,6 +8,19 @@ It is a learning/portfolio project, written to be read: every data-structure cho
 explained in [docs/DESIGN.md](docs/DESIGN.md). It is **not** a production exchange and
 uses **no real market data**.
 
+## Live demo
+
+**https://maddoxk.github.io/cpp-limit-order-book/** - the same C++ engine compiled to WebAssembly with Emscripten
+(`wasm/wasm_api.cpp` is a thin `extern "C"` layer; no matching logic is duplicated in JavaScript).
+Place limit/market orders, watch the depth ladder and trade tape, cancel your resting orders, stream the
+synthetic feed, or run an in-browser benchmark. The demo's "Benchmark in your browser" number is measured on
+the visitor's own machine and browser and is not comparable to the CI table below. All data is synthetic.
+A Node smoke test in CI also checks that the WebAssembly build reproduces the native build's trade count and
+trade checksum on the seed-42, 200k-message feed.
+
+Build the demo locally with Emscripten: `emcmake cmake -S . -B build-wasm -DLOB_BUILD_WASM=ON -DLOB_BUILD_TESTS=OFF -DLOB_BUILD_TOOLS=OFF && cmake --build build-wasm`,
+then serve `site/` with `lob.js` and `lob.wasm` from `build-wasm/wasm_out/` copied next to it.
+
 ## What it does
 
 - Price-time priority matching: limit and market orders, partial fills, multi-level sweeps.
@@ -87,6 +100,7 @@ are averages over a batch.
 - The id index is `std::unordered_map` (node based), and inserting/erasing a price level in the
   middle of the sorted vector is O(levels). Both are discussed in DESIGN.md as deliberate trade-offs.
 - Quantities are 32-bit, prices 32-bit ticks; no sequence numbers, checksums or gap handling on the wire format.
+- The browser demo is single-threaded (the SPSC pipeline is not part of the wasm build) and uses a synthetic feed; the book is shared between your orders and the stream, so streamed cancels can occasionally be rejected after you trade against liquidity.
 - The "ITCH-style" format is inspired by Nasdaq ITCH but is **not** compatible with it.
 - The SPSC pipeline busy-waits with `yield()`; it was tested for correctness under TSan, not tuned.
 - Developed without a local C++ compiler: everything is built and tested in GitHub Actions only.

@@ -86,3 +86,22 @@ jobs:
         with:
           name: benchmark-results
           path: bench_results.json
+
+  wasm:
+    name: WebAssembly build + Node smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.74
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Configure
+        run: >
+          emcmake cmake -S . -B build-wasm -DCMAKE_BUILD_TYPE=Release
+          -DLOB_BUILD_WASM=ON -DLOB_BUILD_TESTS=OFF -DLOB_BUILD_TOOLS=OFF
+      - run: cmake --build build-wasm -j 4
+      - name: Smoke test
+        run: node wasm/smoke_test.js build-wasm/wasm_out/lob.js

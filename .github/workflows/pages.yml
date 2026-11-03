@@ -1,0 +1,53 @@
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main, feat/wasm-demo]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.74
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build WebAssembly module
+        run: |
+          emcmake cmake -S . -B build-wasm -DCMAKE_BUILD_TYPE=Release \
+            -DLOB_BUILD_WASM=ON -DLOB_BUILD_TESTS=OFF -DLOB_BUILD_TOOLS=OFF
+          cmake --build build-wasm -j 4
+      - name: Smoke test before publishing
+        run: node wasm/smoke_test.js build-wasm/wasm_out/lob.js
+      - name: Assemble site
+        run: |
+          mkdir _site
+          cp site/* _site/
+          cp build-wasm/wasm_out/lob.js build-wasm/wasm_out/lob.wasm _site/
+          ls -l _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
