@@ -58,3 +58,13 @@ if(LOB_BUILD_TESTS)
   FetchContent_MakeAvailable(googletest)
   add_subdirectory(tests)
 endif()
+
+if(LOB_BUILD_BENCH)
+  FetchContent_Declare(benchmark
+    URL https://github.com/google/benchmark/archive/refs/tags/v1.9.1.zip)
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+  set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
+  set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(benchmark)
+  add_subdirectory(bench)
+endif()

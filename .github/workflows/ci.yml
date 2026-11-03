@@ -59,3 +59,30 @@ jobs:
       - run: cmake --build build -j 4
       - name: Test
         run: ctest --test-dir build --output-on-failure
+
+  benchmark:
+    name: Benchmarks (ubuntu-latest, shared runner)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          -DLOB_BUILD_BENCH=ON -DLOB_BUILD_TESTS=OFF -DLOB_BUILD_TOOLS=OFF
+      - run: cmake --build build -j 4
+      - name: Machine info
+        run: |
+          nproc
+          lscpu | grep -E "Model name|^CPU\(s\)|MHz" || true
+          g++ --version | head -1
+      - name: Run
+        run: >
+          ./build/bench/lob_bench
+          --benchmark_repetitions=5
+          --benchmark_report_aggregates_only=true
+          --benchmark_out=bench_results.json
+          --benchmark_out_format=json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: bench_results.json
