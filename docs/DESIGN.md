@@ -74,8 +74,7 @@ side, so the "wins" above is reasoning about memory behaviour, not a measured cl
 for bounded price ranges is a direct-indexed array of levels (price - base); it avoids the search
 altogether but needs a price band and wastes memory when sparse.
 
-Levels do not store pointers into the order pool in a way that levels' vector shifts could break: orders
-never reference their level, they find it with a binary search on their price (`remove_order`,
+Orders never store a pointer or index to their level (it would be invalidated whenever the level vector shifts); they find it with a binary search on their price (`remove_order`,
 `reduce_in_place`). That costs O(log levels) per cancel but keeps the structures independent.
 
 ### Order id index
@@ -141,7 +140,7 @@ The `tsan` CI job runs the two-thread tests so the ordering is machine-checked f
 ## 6. Testing strategy
 
 1. **Example tests** pin down each rule with a tiny scenario (priority, sweeps, modify rules, validation).
-2. **Property test**: a ~60-line `ReferenceBook` using `std::map<Price, std::deque<Order>>` and linear scans is
+2. **Property test**: a small `ReferenceBook` (tests/reference_book.hpp) using `std::map<Price, std::deque<Order>>` and linear scans is
    obviously correct and shares no code with the real book. The same seeded random stream of
    limit/market/cancel/modify/execute/invalid operations (prices in a narrow band to force crossings, and a
    wide band to exercise level insert/erase) is applied to both and every result, trade list, top of book,
