@@ -379,7 +379,7 @@ TEST(Pool, SlotsAreReusedWithoutCorruptingQueues) {
     const OrderId base = static_cast<OrderId>(round) * 10 + 1;
     for (OrderId k = 0; k < 8; ++k) book.add_limit(base + k, S, 100 + static_cast<Price>(k % 3), 2);
     for (OrderId k = 0; k < 8; k += 2) EXPECT_EQ(book.cancel(base + k), Status::Ok);
-    book.add_market(1'000'000 + base, B, 5);
+    book.add_market(1'000'000 + base, B, 4);  // even qty keeps every order at 2 or 0
   }
   // Remaining resting orders must still be consistent with the depth view.
   std::uint64_t total = 0;
