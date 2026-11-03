@@ -31,9 +31,22 @@ endif()
 add_library(lob_options INTERFACE)
 target_compile_options(lob_options INTERFACE -Wall -Wextra -Wpedantic)
 
-add_library(lob src/order_book.cpp)
+find_package(Threads REQUIRED)
+
+add_library(lob
+  src/order_book.cpp
+  src/messages.cpp
+  src/generator.cpp
+  src/replay.cpp)
 target_include_directories(lob PUBLIC include)
-target_link_libraries(lob PUBLIC lob_options)
+target_link_libraries(lob PUBLIC lob_options Threads::Threads)
+
+if(LOB_BUILD_TOOLS)
+  add_executable(lob_gen tools/lob_gen.cpp)
+  target_link_libraries(lob_gen PRIVATE lob)
+  add_executable(lob_replay tools/lob_replay.cpp)
+  target_link_libraries(lob_replay PRIVATE lob)
+endif()
 
 include(FetchContent)
 

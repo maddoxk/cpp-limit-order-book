@@ -25,6 +25,11 @@ jobs:
         run: cmake --build build -j 4
       - name: Test
         run: ctest --test-dir build --output-on-failure
+      - name: Smoke test the tools (generate + replay, single and threaded)
+        run: |
+          ./build/lob_gen --out feed.bin --seed 42 --count 200000
+          ./build/lob_replay feed.bin
+          ./build/lob_replay feed.bin --threaded
 
   asan-ubsan:
     name: ASan + UBSan
