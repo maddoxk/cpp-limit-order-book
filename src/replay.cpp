@@ -1,9 +1,11 @@
 #include "lob/replay.hpp"
 
+#ifndef __EMSCRIPTEN__
 #include <atomic>
 #include <thread>
 
 #include "lob/spsc_queue.hpp"
+#endif
 
 namespace lob {
 namespace {
@@ -89,6 +91,9 @@ ReplayResult replay_bytes(std::span<const std::uint8_t> file) {
   return result;
 }
 
+// The two-thread pipeline needs std::thread, which the WebAssembly demo build
+// does not use (single-threaded wasm), so it is compiled out there.
+#ifndef __EMSCRIPTEN__
 ReplayResult replay_bytes_threaded(std::span<const std::uint8_t> file,
                                    std::size_t queue_capacity) {
   ReplayResult result;
@@ -142,5 +147,7 @@ ReplayResult replay_bytes_threaded(std::span<const std::uint8_t> file,
   finalize(book, result.stats);
   return result;
 }
+
+#endif  // __EMSCRIPTEN__
 
 }  // namespace lob
